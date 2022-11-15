@@ -38,6 +38,8 @@ function CustomLpdbInjector:adjust(lpdbData, placement, opponent)
 		placement.placeStart
 	)
 
+	lpdbData.publishertier = Variables.varDefault('tournament_publishertier', '')
+	
 	local team = lpdbData.participant or ''
 	local lpdbPrefix = placement.parent.options.lpdbPrefix
 
