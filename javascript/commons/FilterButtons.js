@@ -215,7 +215,6 @@ liquipedia.filterButtons = {
 		this.updateFromFilterStates();
 		this.setLocalStorage();
 		this.updateDOM();
-		this.refreshScriptsAfterContentUpdate();
 	},
 
 	updateFromFilterStates: function() {
@@ -240,8 +239,10 @@ liquipedia.filterButtons = {
 			filterGroup.filterableItems.forEach( ( filterableItem ) => {
 				if ( filterGroup.curated ) {
 					filterableItem.hidden = !filterableItem.curated;
-				} else {
+				} else if ( filterableItem.value in filterGroup.filterStates ) {
 					filterableItem.hidden = !filterGroup.filterStates[ filterableItem.value ];
+				} else {
+					filterableItem.hidden = false;
 				}
 			} );
 		} );
@@ -298,6 +299,7 @@ liquipedia.filterButtons = {
 			} );
 			if ( isDefault ) {
 				templateExpansion.element.innerHTML = templateExpansion.cache.default;
+				this.refreshScriptsAfterContentUpdate();
 				return;
 			}
 			const parameters = templateExpansion.groups.map( ( group ) => {
@@ -314,6 +316,7 @@ liquipedia.filterButtons = {
 
 			if ( wikitext in templateExpansion.cache ) {
 				templateExpansion.element.innerHTML = templateExpansion.cache[ wikitext ];
+				this.refreshScriptsAfterContentUpdate();
 				return;
 			}
 
@@ -333,6 +336,7 @@ liquipedia.filterButtons = {
 					if ( data.parse?.text?.[ '*' ] ) {
 						templateExpansion.element.innerHTML = data.parse.text[ '*' ];
 						templateExpansion.cache[ wikitext ] = data.parse.text[ '*' ];
+						this.refreshScriptsAfterContentUpdate();
 					}
 				} );
 			} );
