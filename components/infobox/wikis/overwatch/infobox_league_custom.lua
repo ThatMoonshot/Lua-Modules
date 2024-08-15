@@ -48,6 +48,25 @@ function CustomLeague:customParseArguments(args)
 	self.data.publishertier = self:_validPublisherTier(args.blizzardtier) and args.blizzardtier:lower()
 end
 
+---@param date string
+---@return string
+function compareDates(date1, date2)
+    return date1 > date2
+end
+
+function getGame(args)
+    local endDate = Variables.varDefault('tournament_enddate')
+    if String.isNotEmpty(args.game) then
+        return args.game
+    else
+        if compareDates(endDate, '2022-10-04') then
+            return 'overwatch2'
+        else
+            return 'overwatch'
+        end
+    end
+end
+
 ---@param id string
 ---@param widgets Widget[]
 ---@return Widget[]
@@ -93,6 +112,26 @@ function CustomLeague:addToLpdb(lpdbData, args)
 	lpdbData.extradata.individual = String.isNotEmpty(args.player_number) and 'true' or ''
 
 	return lpdbData
+end
+
+---@param base string
+---@return string[]
+function CustomLeague:_makeBasedListFromArgs(base)
+	local firstArg = self.args[base .. '1']
+	local foundArgs = {PageLink.makeInternalLink({}, firstArg)}
+	local index = 2
+
+	while String.isNotEmpty(self.args[base .. index]) do
+		local currentArg = self.args[base .. index]
+		table.insert(foundArgs, '&nbsp;• ' ..
+			tostring(self:_createNoWrappingSpan(
+				PageLink.makeInternalLink({}, currentArg)
+			))
+		)
+		index = index + 1
+	end
+
+	return foundArgs
 end
 
 ---@param publishertier string?
