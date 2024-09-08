@@ -97,7 +97,7 @@ function CustomInjector:parse(id, widgets)
 	elseif id == 'hotkey' then
 		if not args.hotkey and not args.macro_key then return {} end
 		local hotkeyName = table.concat(Array.append({},
-			args.hotkey and 'Hotkeys',  args.macro_key and 'Macrokeys'
+			args.hotkey and 'Hotkeys', args.macro_key and 'Macrokeys'
 		), HOTKEY_SEPERATOR)
 		local hotkeys = table.concat(Array.append({},
 			args.hotkey and CustomUnit._hotkeys(args.hotkey, args.hotkey2),
@@ -237,6 +237,8 @@ function CustomUnit:setLpdbData(args)
 			passive = Array.parseCommaSeparatedString(args.passive),
 			armortypes = Array.parseCommaSeparatedString(args.armor_type),
 			upgradesto = Array.parseCommaSeparatedString(args.upgrades_to),
+			bountyluminite = tonumber(args.bounty_luminite),
+			bountytherium = tonumber(args.bounty_therium),
 		},
 	})
 end
