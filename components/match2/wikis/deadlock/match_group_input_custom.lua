@@ -19,7 +19,6 @@ local MatchGroupInputUtil = Lua.import('Module:MatchGroup/Input/Util')
 local OPPONENT_CONFIG = {
 	resolveRedirect = true,
 	pagifyTeamNames = true,
-	pagifyPlayerNames = true,
 	maxNumPlayers = 10,
 }
 
@@ -61,13 +60,12 @@ function CustomMatchGroupInput.processMatch(match, options)
 		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
 		match.walkover = MatchGroupInputUtil.getWalkover(match.resulttype, opponents)
 		match.winner = MatchGroupInputUtil.getWinner(match.resulttype, winnerInput, opponents)
-		MatchGroupInputUtil.setPlacement(opponents, match.winner, 1, 2)
-	elseif MatchGroupInputUtil.isNotPlayed(winnerInput, finishedInput) then
-		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
-		match.winner = nil
+		Array.forEach(opponents, function(opponent, opponentIndex)
+			opponent.placement = MatchGroupInputUtil.placementFromWinner(match.resulttype, match.winner, opponentIndex)
+		end)
 	end
 
-	MatchGroupInputUtil.getCommonTournamentVars(match)
+	Table.mergeInto(match, MatchGroupInputUtil.getTournamentContext(match))
 
 	match.stream = Streams.processStreams(match)
 
@@ -104,7 +102,7 @@ function MatchFunctions.extractMaps(match, opponents)
 		end)
 
 		map.scores = Array.map(opponentInfo, Operator.property('score'))
-		if map.finished or MatchGroupInputUtil.isNotPlayed(map.winner, finishedInput) then
+		if map.finished then
 			map.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponentInfo)
 			map.walkover = MatchGroupInputUtil.getWalkover(map.resulttype, opponentInfo)
 			map.winner = MatchGroupInputUtil.getWinner(map.resulttype, winnerInput, opponentInfo)
@@ -116,8 +114,6 @@ function MatchFunctions.extractMaps(match, opponents)
 
 	return maps
 end
-
-CustomMatchGroupInput.processMap = FnUtil.identity
 
 ---@param maps table[]
 ---@return fun(opponentIndex: integer): integer

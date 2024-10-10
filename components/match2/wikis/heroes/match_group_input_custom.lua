@@ -66,13 +66,13 @@ function CustomMatchGroupInput.processMatch(match, options)
 		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
 		match.walkover = MatchGroupInputUtil.getWalkover(match.resulttype, opponents)
 		match.winner = MatchGroupInputUtil.getWinner(match.resulttype, winnerInput, opponents)
-		MatchGroupInputUtil.setPlacement(opponents, match.winner, 1, 2)
-	elseif MatchGroupInputUtil.isNotPlayed(winnerInput, finishedInput) then
-		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
-		match.winner = nil
+		Array.forEach(opponents, function(opponent, opponentIndex)
+			opponent.placement = MatchGroupInputUtil.placementFromWinner(match.resulttype, match.winner, opponentIndex)
+		end)
 	end
 
-	MatchFunctions.getTournamentVars(match)
+	match.mode = Logic.emptyOr(match.mode, Variables.varDefault('tournament_mode', DEFAULT_MODE))
+	Table.mergeInto(match, MatchGroupInputUtil.getTournamentContext(match))
 
 	match.stream = Streams.processStreams(match)
 	match.links = MatchFunctions.getLinks(match)
@@ -112,7 +112,7 @@ function CustomMatchGroupInput.extractMaps(match, opponentCount)
 		end)
 
 		map.scores = Array.map(opponentInfo, Operator.property('score'))
-		if map.finished or MatchGroupInputUtil.isNotPlayed(map.winner, finishedInput) then
+		if map.finished then
 			map.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponentInfo)
 			map.walkover = MatchGroupInputUtil.getWalkover(map.resulttype, opponentInfo)
 			map.winner = MatchGroupInputUtil.getWinner(map.resulttype, winnerInput, opponentInfo)
@@ -124,8 +124,6 @@ function CustomMatchGroupInput.extractMaps(match, opponentCount)
 
 	return maps
 end
-
-CustomMatchGroupInput.processMap = FnUtil.identity
 
 
 --
@@ -146,13 +144,6 @@ function MatchFunctions.getBestOf(match)
 	local bestOf = tonumber(Logic.emptyOr(match.bestof, Variables.varDefault('bestof')))
 	Variables.varDefine('bestof', bestOf)
 	return bestOf or DEFAULT_BESTOF
-end
-
----@param match table
----@return table
-function MatchFunctions.getTournamentVars(match)
-	match.mode = Logic.emptyOr(match.mode, Variables.varDefault('tournament_mode', DEFAULT_MODE))
-	return MatchGroupInputUtil.getCommonTournamentVars(match)
 end
 
 ---@param match table

@@ -46,7 +46,7 @@ function CustomMatchGroupInput.processMatch(match, options)
 	games = MatchFunctions.removeUnsetMaps(games)
 
 	local autoScoreFunction = MatchGroupInputUtil.canUseAutoScore(match, games)
-		and MatchFunctions.calculateMatchScore(games, match.bestof)
+		and MatchFunctions.calculateMatchScore(games)
 		or nil
 	Array.forEach(opponents, function(opponent, opponentIndex)
 		opponent.score, opponent.status = MatchGroupInputUtil.computeOpponentScore({
@@ -63,13 +63,13 @@ function CustomMatchGroupInput.processMatch(match, options)
 		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
 		match.walkover = MatchGroupInputUtil.getWalkover(match.resulttype, opponents)
 		match.winner = MatchGroupInputUtil.getWinner(match.resulttype, winnerInput, opponents)
-		MatchGroupInputUtil.setPlacement(opponents, match.winner, 1, 2)
-	elseif MatchGroupInputUtil.isNotPlayed(winnerInput, finishedInput) then
-		match.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponents)
-		match.winner = nil
+		Array.forEach(opponents, function(opponent, opponentIndex)
+			opponent.placement = MatchGroupInputUtil.placementFromWinner(match.resulttype, match.winner, opponentIndex)
+		end)
 	end
 
-	MatchFunctions.getTournamentVars(match)
+	match.mode = Logic.emptyOr(match.mode, Variables.varDefault('tournament_mode'), DEFAULT_MODE)
+	Table.mergeInto(match, MatchGroupInputUtil.getTournamentContext(match))
 
 	match.stream = Streams.processStreams(match)
 	match.links = MatchFunctions.getLinks(match)
@@ -81,8 +81,6 @@ function CustomMatchGroupInput.processMatch(match, options)
 
 	return match
 end
-
-CustomMatchGroupInput.processMap = FnUtil.identity
 
 --
 -- match related functions
@@ -111,7 +109,7 @@ function MatchFunctions.extractMaps(match, opponentCount)
 		end)
 
 		map.scores = Array.map(opponentInfo, Operator.property('score'))
-		if map.finished or MatchGroupInputUtil.isNotPlayed(map.winner, finishedInput) then
+		if map.finished then
 			map.resulttype = MatchGroupInputUtil.getResultType(winnerInput, finishedInput, opponentInfo)
 			map.walkover = MatchGroupInputUtil.getWalkover(map.resulttype, opponentInfo)
 			map.winner = MatchGroupInputUtil.getWinner(map.resulttype, winnerInput, opponentInfo)
@@ -124,14 +122,6 @@ function MatchFunctions.extractMaps(match, opponentCount)
 	return maps
 end
 
---- Fetch information about the tournament
----@param match table
----@return table
-function MatchFunctions.getTournamentVars(match)
-	match.mode = Logic.emptyOr(match.mode, Variables.varDefault('tournament_mode'), DEFAULT_MODE)
-	return MatchGroupInputUtil.getCommonTournamentVars(match)
-end
-
 -- Template:Map sets a default map name so we can count the number of maps.
 -- These maps however shouldn't be stored
 -- The keepMap function will check if a map should be kept
@@ -141,20 +131,10 @@ function MatchFunctions.removeUnsetMaps(games)
 	return Array.filter(games, MapFunctions.keepMap)
 end
 
--- Calculate the match scores based on the map results.
--- If it's a Best of 1, we'll take the exact score of that map
--- If it's not a Best of 1, we should count the map wins
 ---@param maps table[]
----@param bestOf integer
 ---@return fun(opponentIndex: integer): integer?
-function MatchFunctions.calculateMatchScore(maps, bestOf)
+function MatchFunctions.calculateMatchScore(maps)
 	return function(opponentIndex)
-		if bestOf == 1 then
-			if not maps[1] or not maps[1].scores then
-				return
-			end
-			return maps[1].scores[opponentIndex]
-		end
 		return MatchGroupInputUtil.computeMatchScoreFromMapWinners(maps, opponentIndex)
 	end
 end
