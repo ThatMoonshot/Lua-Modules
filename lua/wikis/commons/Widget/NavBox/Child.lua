@@ -1,6 +1,5 @@
 ---
 -- @Liquipedia
--- wiki=commons
 -- page=Module:Widget/NavBox/Child
 --
 -- Please see https://github.com/Liquipedia/Lua-Modules to contribute
@@ -45,7 +44,7 @@ NavBoxChild.defaultProps = {
 function NavBoxChild:render()
 	local props = self.props
 
-	assert(props[1] or props.child1, EMPTY_CHILD_ERROR)
+	assert(Logic.readBool(props.allowEmpty) or props[1] or props.child1, EMPTY_CHILD_ERROR)
 
 	local listElements = Array.mapIndexes(function(index)
 		return self.props[index]
