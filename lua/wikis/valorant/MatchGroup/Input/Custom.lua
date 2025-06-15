@@ -1,6 +1,5 @@
 ---
 -- @Liquipedia
--- wiki=valorant
 -- page=Module:MatchGroup/Input/Custom
 --
 -- Please see https://github.com/Liquipedia/Lua-Modules to contribute
@@ -10,6 +9,7 @@ local Array = require('Module:Array')
 local AgentNames = require('Module:AgentNames')
 local FnUtil = require('Module:FnUtil')
 local Lua = require('Module:Lua')
+local Table = require('Module:Table')
 
 local MatchGroupInputUtil = Lua.import('Module:MatchGroup/Input/Util')
 local MatchGroupUtil = Lua.import('Module:MatchGroup/Util/Custom')
@@ -23,6 +23,8 @@ local MatchFunctions = {
 	}
 }
 local MapFunctions = {}
+
+local VALORANT_REGIONS = {'eu', 'na', 'ap', 'kr', 'latam', 'br', 'pbe1', 'esports'}
 
 ---@alias ValorantSides 'atk'|'def'
 ---@alias ValorantRoundData{round: integer, winBy:string,
@@ -131,6 +133,10 @@ end
 ---@return table<string, any>
 function MapFunctions.getExtraData(MapParser, match, map, opponents)
 	local publisherId, publisherRegion = MapParser.getMatchId(map)
+
+	if not Table.includes(VALORANT_REGIONS, publisherRegion) then
+		publisherRegion = nil
+	end
 
 	---@type table<string, any>
 	local extraData = {
